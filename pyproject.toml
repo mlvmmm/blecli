@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blecli"
+version = "0.1.0"
+description = "BLE recon CLI: scan advertisers, enumerate GATT, stream notifications, drive passive sniffers"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["bleak>=0.22"]
+
+[project.scripts]
+blecli = "blecli.cli:main"
+
+[tool.setuptools]
+packages = ["blecli"]
