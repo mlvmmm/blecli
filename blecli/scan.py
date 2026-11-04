@@ -11,7 +11,7 @@ from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 from bleak.uuids import uuidstr_to_str
 
-from blecli.util import JsonlWriter, company_name, hexdump, now_iso
+from blecli.util import JsonlWriter, adapter_kwargs, company_name, hexdump, now_iso
 
 
 @dataclass
@@ -83,7 +83,7 @@ async def run_scan(args) -> int:
             print(f"[{now_iso()}] {'NEW ' if is_new else '    '}{device.address}  "
                   f"{adv.rssi:4d} dBm  {name or '<unnamed>'}  mfr={mfr}")
 
-    scanner = BleakScanner(detection_callback=on_adv, **_adapter_kwargs(args))
+    scanner = BleakScanner(detection_callback=on_adv, **adapter_kwargs(args))
     print(f"Scanning{' until Ctrl+C' if args.timeout <= 0 else f' for {args.timeout:g}s'}...")
     await scanner.start()
     try:
@@ -119,6 +119,3 @@ def _print_summary(seen: dict[str, Seen]) -> None:
         if s.tx_power is not None:
             print(f"{'':<58}tx_power {s.tx_power} dBm")
 
-
-def _adapter_kwargs(args) -> dict:
-    return {"adapter": args.adapter} if getattr(args, "adapter", None) else {}

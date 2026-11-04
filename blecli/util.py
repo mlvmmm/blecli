@@ -21,6 +21,12 @@ COMPANY_IDS = {
 }
 
 
+def adapter_kwargs(args) -> dict:
+    """Build the bleak arguments that select an adapter (BlueZ only)."""
+    adapter = getattr(args, "adapter", None)
+    return {"bluez": {"adapter": adapter}} if adapter else {}
+
+
 def company_name(cid: int) -> str:
     return COMPANY_IDS.get(cid, f"0x{cid:04X}")
 

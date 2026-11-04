@@ -12,7 +12,7 @@ from blecli import gatt, scan, sniff
 
 def _add_adapter(p: argparse.ArgumentParser) -> None:
     p.add_argument("-i", "--adapter", metavar="hciX",
-                   help="HCI adapter to use (e.g. hci0). Default: system default.")
+                   help="HCI adapter to use (e.g. hci0), BlueZ only. Default: system default.")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -25,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     # scan
-    s = sub.add_parser("scan", help="Passively collect BLE advertisements.")
+    s = sub.add_parser("scan", help="Collect BLE advertisements (active scan: sends scan requests).")
     _add_adapter(s)
     s.add_argument("-t", "--timeout", type=float, default=10,
                    help="Seconds to scan; <=0 runs until Ctrl+C. Default 10.")

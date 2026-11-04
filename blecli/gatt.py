@@ -9,22 +9,18 @@ from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.uuids import uuidstr_to_str
 
-from blecli.util import JsonlWriter, hexdump, now_iso, parse_hex, printable
-
-
-def _adapter_kwargs(args) -> dict:
-    return {"adapter": args.adapter} if getattr(args, "adapter", None) else {}
+from blecli.util import JsonlWriter, adapter_kwargs, hexdump, now_iso, parse_hex, printable
 
 
 async def _connect(args) -> BleakClient:
     """Resolve the target first so a missing device fails fast with a clear message."""
     print(f"Looking for {args.address}...", file=sys.stderr)
     device = await BleakScanner.find_device_by_address(
-        args.address, timeout=args.scan_timeout, **_adapter_kwargs(args)
+        args.address, timeout=args.scan_timeout, **adapter_kwargs(args)
     )
     if device is None:
         raise SystemExit(f"error: {args.address} not found within {args.scan_timeout:g}s")
-    client = BleakClient(device, timeout=args.connect_timeout, **_adapter_kwargs(args))
+    client = BleakClient(device, timeout=args.connect_timeout, **adapter_kwargs(args))
     await client.connect()
     print(f"Connected to {device.address} ({device.name or 'unnamed'}), MTU {client.mtu_size}",
           file=sys.stderr)
@@ -32,19 +28,26 @@ async def _connect(args) -> BleakClient:
 
 
 def _full_uuid(ref: str) -> str:
-    """Expand a 16-bit short UUID into its full 128-bit form."""
-    ref = ref.lower()
+    """Expand a 16-bit short UUID, with or without 0x, into its full 128-bit form."""
+    ref = ref.lower().removeprefix("0x")
     return f"0000{ref}-0000-1000-8000-00805f9b34fb" if len(ref) == 4 else ref
 
 
 def _resolve_char(client: BleakClient, ref: str) -> BleakGATTCharacteristic:
-    """Accept a characteristic UUID, a 16-bit short UUID, or a decimal/0x handle."""
+    """Accept a characteristic UUID, a 16-bit short UUID, or a decimal/0x handle.
+
+    A value that could be either, such as 0xffe1 or 2902, is tried as a handle first.
+    """
     services = client.services
-    if ref.lower().startswith("0x") or ref.isdigit():
-        char = services.get_characteristic(int(ref, 0))
-        if char:
-            return char
-    char = services.get_characteristic(_full_uuid(ref))
+    is_hex = ref.lower().startswith("0x")
+    try:
+        if is_hex or ref.isdigit():
+            char = services.get_characteristic(int(ref, 16 if is_hex else 10))
+            if char:
+                return char
+        char = services.get_characteristic(_full_uuid(ref))
+    except ValueError:  # not valid as a handle or a UUID
+        char = None
     if char is None:
         raise SystemExit(f"error: no characteristic matching {ref!r}")
     return char

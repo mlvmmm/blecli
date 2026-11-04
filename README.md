@@ -29,7 +29,7 @@ sudo setcap 'cap_net_raw,cap_net_admin+eip' $(readlink -f $(which python3))
 ## Usage
 
 ```bash
-blecli scan                      # 10s passive advertisement sweep
+blecli scan                      # 10s advertisement sweep
 blecli scan -t 0 -v --json out.json   # run until Ctrl+C, log everything
 blecli scan -n Fitbit -r -70     # only "Fitbit"-ish devices stronger than -70 dBm
 
@@ -40,7 +40,11 @@ blecli notify AA:BB:CC:DD:EE:FF 2a37 --log hr.jsonl   # stream notifications
 ```
 
 Characteristics can be given as a full 128-bit UUID, a 16-bit short UUID
-(`2a19`), or a handle (`0x0012`).
+(`2a19`), or a handle (`0x0012`). A value that could be either, such as `0xffe1`,
+is tried as a handle first and then as a short UUID.
+
+`scan` is an active scan: the adapter sends scan requests to the devices it hears,
+so they can detect it. It is not silent. `--adapter` only applies on BlueZ.
 
 ## Passive sniffing
 
@@ -67,7 +71,7 @@ Open the resulting `.pcap`/`.btsnoop` files in Wireshark for analysis.
 
 | Command        | What it does                                             |
 |----------------|----------------------------------------------------------|
-| `scan`         | Collect advertisements: name, RSSI, vendor, service data |
+| `scan`         | Actively collect advertisements: name, RSSI, vendor, service data |
 | `enum`         | Connect and list services, characteristics, descriptors  |
 | `read`         | Read a single characteristic                             |
 | `write`        | Write bytes to a characteristic (with or without response)|
